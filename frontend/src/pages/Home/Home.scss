@@ -1,0 +1,56 @@
+@use "../../styles/shadows" as *;
+@use "../../styles/typography" as *;
+@use "../../styles/button" as *;
+
+.page-actions {
+  border-top: 1px solid var(--grey-200);
+  margin-top: 1rem;
+  padding: 2rem 0;
+  display: flex;
+
+  flex-direction: column;
+  justify-content: stretch;
+  align-items: stretch;
+}
+
+.teams-card-container,
+.idea-cards-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+@media screen and (min-width: 768px) {
+  .page-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    .input-search-bar {
+      max-width: 300px;
+    }
+  }
+
+  .teams-card-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .idea-cards-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 992px) {
+  .teams-card-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media screen and (min-width: 1200px) {
+  .idea-cards-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (min-width: 1400px) {
+  .teams-card-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
