@@ -8,7 +8,7 @@ import AuthContext from "../../contexts/AuthContext";
 import CompanyContext from "../../contexts/CompanyContext";
 import "./NewIdeaModal.scss";
 
-export default function NewIdeaModal({ setIsNewIdeaModalOpen }) {
+export default function NewIdeaModal({ setIsNewIdeaModalOpen, onAdd }) {
   const [isModalVisible, setIsModalVisible] = useState(true);
   const { userToken, userInfos } = useContext(AuthContext);
   const { companyInfos } = useContext(CompanyContext);
@@ -84,6 +84,13 @@ export default function NewIdeaModal({ setIsNewIdeaModalOpen }) {
         fileId: null,
         workspace_id: workspaceId,
       };
+
+      const onAddSuccess = () => {
+        if (onAdd) {
+          onAdd();
+        }
+      };
+
       axios
         .post(
           `${import.meta.env.VITE_BACKEND_URL}/companies/${
@@ -99,6 +106,8 @@ export default function NewIdeaModal({ setIsNewIdeaModalOpen }) {
         .then((response) => {
           if (response.status === 201) {
             setIsNewIdeaModalOpen(false);
+            onAddSuccess();
+
             const insertedIdeaId = response.data.insertId;
             if (selectedCategories.length) {
               selectedCategories.map(
@@ -114,6 +123,9 @@ export default function NewIdeaModal({ setIsNewIdeaModalOpen }) {
                         },
                       }
                     )
+                    .then(() => {
+                      onAddSuccess();
+                    })
                     .catch((error) => {
                       console.error(error.message);
                     })
@@ -230,4 +242,9 @@ export default function NewIdeaModal({ setIsNewIdeaModalOpen }) {
 
 NewIdeaModal.propTypes = {
   setIsNewIdeaModalOpen: PropTypes.func.isRequired,
+  onAdd: PropTypes.func,
+};
+
+NewIdeaModal.defaultProps = {
+  onAdd: undefined,
 };

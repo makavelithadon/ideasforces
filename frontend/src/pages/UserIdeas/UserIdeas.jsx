@@ -1,8 +1,7 @@
 /* eslint-disable camelcase */
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { sanitize } from "isomorphic-dompurify";
-import axios from "axios";
 import "./UserIdeas.scss";
 import AuthContext from "../../contexts/AuthContext";
 import CompanyContext from "../../contexts/CompanyContext";
@@ -12,6 +11,8 @@ import NavBar from "../../components/NavBar/NavBar";
 import Connection from "../../components/Connection/Connection";
 import DataSearchBar from "../../components/DataSearchBar/DataSearchBar";
 import NewIdeaModal from "../../components/NewIdeaModal/NewIdeaModal";
+import { useFetchUserIdeas } from "../../hooks/useFetchUserIdeas";
+import ModifiedIdeaModal from "../../components/ModifiedIdeaModal/ModifiedIdeaModal";
 
 export default function UserIdeas() {
   const { userToken, userInfos } = useContext(AuthContext);
@@ -21,6 +22,24 @@ export default function UserIdeas() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTermIdea, setSearchTermIdea] = useState("");
   const [isNewIdeaModalOpen, setIsNewIdeaModalOpen] = useState(false);
+  const [isModifiedIdeaModalOpen, setIsModifiedIdeaModalOpen] = useState(false);
+  const [currentIdea, setCurrentIdea] = useState(null);
+
+  const { fetchUserIdeas } = useFetchUserIdeas();
+
+  const fetchDataIdea = useCallback(() => {
+    fetchUserIdeas({
+      companyId: companyInfos.id,
+      userId: userInfos.id,
+      onSuccess(response) {
+        setDataIdea(response.data);
+        setIsLoading(false);
+      },
+      onFailure(error) {
+        console.error("Error fetching ideas:", error);
+      },
+    });
+  }, [companyInfos, userInfos]);
 
   useEffect(() => {
     setCompanyInfos((prevCompanyInfos) => ({
@@ -38,22 +57,7 @@ export default function UserIdeas() {
 
   useEffect(() => {
     if (companyInfos.id && userInfos.id) {
-      axios
-        .get(
-          `${import.meta.env.VITE_BACKEND_URL}/companies/${
-            companyInfos.id
-          }/users/${userInfos.id}/ideas/`,
-          {
-            headers: { Authorization: `Bearer ${userToken}` },
-          }
-        )
-        .then((response) => {
-          setDataIdea(response.data);
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching ideas:", error);
-        });
+      fetchDataIdea();
     }
   }, [companyInfos.id, userInfos.id, userToken]);
 
@@ -112,17 +116,35 @@ export default function UserIdeas() {
                   }
                   return false;
                 })
-                .map((idea) => <IdeaCard key={idea.id} idea={idea} />)}
+                .map((idea) => (
+                  <IdeaCard
+                    key={idea.id}
+                    idea={idea}
+                    onDelete={fetchDataIdea}
+                    onShowMenu={() => {
+                      setCurrentIdea(idea);
+                    }}
+                    setIsModifiedIdeaModalOpen={setIsModifiedIdeaModalOpen}
+                  />
+                ))}
           </div>
           {isNewIdeaModalOpen && (
             <NewIdeaModal
               isNewIdeaModalOpen={isNewIdeaModalOpen}
               setIsNewIdeaModalOpen={setIsNewIdeaModalOpen}
+              onAdd={fetchDataIdea}
             />
           )}
         </main>
       ) : (
         <Connection />
+      )}
+      {isModifiedIdeaModalOpen && (
+        <ModifiedIdeaModal
+          setIsModifiedIdeaModalOpen={setIsModifiedIdeaModalOpen}
+          currentIdea={currentIdea}
+          onEdit={fetchDataIdea}
+        />
       )}
     </div>
   );

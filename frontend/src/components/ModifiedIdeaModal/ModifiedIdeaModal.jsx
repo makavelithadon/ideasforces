@@ -11,6 +11,7 @@ import "./ModifiedIdeaModal.scss";
 export default function ModifiedIdeaModal({
   setIsModifiedIdeaModalOpen,
   currentIdea,
+  onEdit,
 }) {
   const [isModalVisible, setIsModalVisible] = useState(true);
   const { userToken } = useContext(AuthContext);
@@ -79,6 +80,15 @@ export default function ModifiedIdeaModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const onEditSuccess = () => {
+      setIsModifiedIdeaModalOpen(false);
+
+      if (onEdit) {
+        onEdit();
+      }
+    };
+
     if (textIdea.length) {
       const formObject = {
         title: titleIdea,
@@ -100,6 +110,8 @@ export default function ModifiedIdeaModal({
         )
         .then((response) => {
           if (response.status === 201) {
+            onEditSuccess();
+
             if (currentIdea.categories) {
               axios
                 .delete(
@@ -113,6 +125,8 @@ export default function ModifiedIdeaModal({
                   }
                 )
                 .then(() => {
+                  onEditSuccess();
+
                   if (selectedCategories.length) {
                     selectedCategories.map((el) =>
                       axios
@@ -127,6 +141,8 @@ export default function ModifiedIdeaModal({
                         )
                         .then(() => {
                           setIsModifiedIdeaModalOpen(false);
+
+                          onEditSuccess();
                         })
                         .catch((error) => {
                           console.error(error.message);
@@ -148,6 +164,8 @@ export default function ModifiedIdeaModal({
                   )
                   .then(() => {
                     setIsModifiedIdeaModalOpen(false);
+
+                    onEditSuccess();
                   })
                   .catch((error) => {
                     console.error(error.message);
@@ -273,6 +291,7 @@ ModifiedIdeaModal.propTypes = {
     likes_count: propTypes.number,
     is_liked_by_user: propTypes.number,
   }),
+  onEdit: propTypes.func,
 };
 
 ModifiedIdeaModal.defaultProps = {
@@ -286,4 +305,5 @@ ModifiedIdeaModal.defaultProps = {
     likes_count: 0,
     is_liked_by_user: 0,
   },
+  onEdit: undefined,
 };

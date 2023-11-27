@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { sanitize } from "isomorphic-dompurify";
 
@@ -16,8 +16,11 @@ import Connection from "../../components/Connection/Connection";
 import NewTeamModal from "../../components/NewTeamModal/NewTeamModal";
 import NewIdeaModal from "../../components/NewIdeaModal/NewIdeaModal";
 import DataSearchBar from "../../components/DataSearchBar/DataSearchBar";
+import { useFetchIdeas } from "../../hooks/useFetchIdeas";
+import ModifiedIdeaModal from "../../components/ModifiedIdeaModal/ModifiedIdeaModal";
 
 export default function Home() {
+  const { fetchIdeas } = useFetchIdeas();
   const { userToken, userInfos } = useContext(AuthContext);
   const { setCompanyInfos, companyInfos } = useContext(CompanyContext);
   const { company_slug } = useParams();
@@ -26,11 +29,28 @@ export default function Home() {
   const [teams, setTeams] = useState([]);
   const [pagePart, setPagePart] = useState("ideas");
   const [isNewTeamModalOpen, setIsNewTeamModalOpen] = useState(false);
+  const [isModifiedIdeaModalOpen, setIsModifiedIdeaModalOpen] = useState(false);
 
   // eslint-disable-next-line no-unused-vars
   const [isNewIdeaModalOpen, setIsNewIdeaModalOpen] = useState(false);
   const [searchTermIdea, setSearchTermIdea] = useState("");
   const [searchTermTeam, setSearchTermTeam] = useState("");
+  const [currentIdea, setCurrentIdea] = useState(null);
+
+  const fetchDataIdea = useCallback(() => {
+    fetchIdeas({
+      companyId: companyInfos.id,
+      userId: userInfos.id,
+      onSuccess(response) {
+        setDataIdea(response.data);
+        setIsLoading(false);
+      },
+      onFailure(error) {
+        console.error("Error fetching ideas:", error);
+      },
+    });
+  }, [companyInfos, userInfos]);
+
   useEffect(() => {
     setCompanyInfos((prevCompanyInfos) => ({
       ...prevCompanyInfos,
@@ -47,23 +67,7 @@ export default function Home() {
 
   useEffect(() => {
     if (companyInfos.id && userInfos.id) {
-      axios
-        .get(
-          `${import.meta.env.VITE_BACKEND_URL}/companies/${
-            companyInfos.id
-          }/ideas/${userInfos.id}/`,
-          {
-            headers: { Authorization: `Bearer ${userToken}` },
-          }
-        )
-        .then((response) => {
-          setDataIdea(response.data);
-
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching ideas:", error);
-        });
+      fetchDataIdea();
     }
   }, [companyInfos.id, userInfos.id, isNewIdeaModalOpen]);
 
@@ -194,12 +198,23 @@ export default function Home() {
                       }
                       return false;
                     })
-                    .map((idea) => <IdeaCard key={idea.id} idea={idea} />)}
+                    .map((idea) => (
+                      <IdeaCard
+                        key={idea.id}
+                        idea={idea}
+                        onDelete={fetchDataIdea}
+                        onShowMenu={() => {
+                          setCurrentIdea(idea);
+                        }}
+                        setIsModifiedIdeaModalOpen={setIsModifiedIdeaModalOpen}
+                      />
+                    ))}
               </div>
               {isNewIdeaModalOpen && (
                 <NewIdeaModal
                   isNewIdeaModalOpen={isNewIdeaModalOpen}
                   setIsNewIdeaModalOpen={setIsNewIdeaModalOpen}
+                  onAdd={fetchDataIdea}
                 />
               )}
             </>
@@ -255,6 +270,13 @@ export default function Home() {
         </main>
       ) : (
         <Connection />
+      )}
+      {isModifiedIdeaModalOpen && (
+        <ModifiedIdeaModal
+          setIsModifiedIdeaModalOpen={setIsModifiedIdeaModalOpen}
+          currentIdea={currentIdea}
+          onEdit={fetchDataIdea}
+        />
       )}
     </div>
   );

@@ -10,6 +10,7 @@ export default function SubmenuIdeaButton({
   ideaId,
   setIsIdeaDeleted,
   setIsModifiedIdeaModalOpen,
+  onDelete,
 }) {
   // on fait apparaitre/ cache le sous-menu de l'idée quand on clic dessus
   const { userToken } = useContext(AuthContext);
@@ -25,10 +26,18 @@ export default function SubmenuIdeaButton({
         if (res.affectedRows === 0) {
           console.error("L'idée n'a pas été supprimée");
         } else {
-          setIsIdeaDeleted(true);
+          if (setIsIdeaDeleted) {
+            setIsIdeaDeleted(true);
+          }
           setShowSubmenu(false);
+          if (onDelete) {
+            onDelete();
+          }
+
           setTimeout(() => {
-            setIsIdeaDeleted(false);
+            if (setIsIdeaDeleted) {
+              setIsIdeaDeleted(true);
+            }
           }, 3000);
         }
       })
@@ -46,7 +55,10 @@ export default function SubmenuIdeaButton({
           </div>
           <li
             aria-hidden="true"
-            onClick={() => setIsModifiedIdeaModalOpen(true)}
+            onClick={() => {
+              setIsModifiedIdeaModalOpen(true);
+              setShowSubmenu(false);
+            }}
           >
             <i className="fi fi-rr-attribution-pencil" />
             <p>Modifier</p>
@@ -66,4 +78,9 @@ SubmenuIdeaButton.propTypes = {
   ideaId: PropTypes.number.isRequired,
   setIsIdeaDeleted: PropTypes.func.isRequired,
   setIsModifiedIdeaModalOpen: PropTypes.func.isRequired,
+  onDelete: PropTypes.func,
+};
+
+SubmenuIdeaButton.defaultProps = {
+  onDelete: undefined,
 };

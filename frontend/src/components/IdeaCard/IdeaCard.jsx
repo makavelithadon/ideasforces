@@ -6,7 +6,12 @@ import SubmenuIdeaButton from "../SubmenuIdeaButton/SubmenuIdeaButton";
 import "./IdeaCard.scss";
 import Badge from "../Badge/Badge";
 
-export default function IdeaCard({ idea }) {
+export default function IdeaCard({
+  idea,
+  onDelete,
+  onShowMenu,
+  setIsModifiedIdeaModalOpen,
+}) {
   const [likeCount, setLikeCount] = useState(idea.likes_count);
   const [showSubmenu, setShowSubmenu] = useState(false);
   const [likeActive, setLikeActive] = useState(idea.is_liked_by_user);
@@ -26,12 +31,22 @@ export default function IdeaCard({ idea }) {
         <button
           type="button"
           className="idea-menu-icon"
-          onClick={() => setShowSubmenu(true)}
+          onClick={() => {
+            setShowSubmenu(true);
+            if (onShowMenu) {
+              onShowMenu();
+            }
+          }}
         >
           <i className="fi fi-rr-menu-dots-vertical" />
         </button>
         {showSubmenu && (
-          <SubmenuIdeaButton setShowSubmenu={setShowSubmenu} ideaId={idea.id} />
+          <SubmenuIdeaButton
+            setShowSubmenu={setShowSubmenu}
+            ideaId={idea.id}
+            onDelete={onDelete ?? undefined}
+            setIsModifiedIdeaModalOpen={setIsModifiedIdeaModalOpen}
+          />
         )}
       </div>
 
@@ -76,6 +91,9 @@ IdeaCard.propTypes = {
     categories: PropTypes.string,
     is_liked_by_user: PropTypes.number,
   }),
+  onDelete: PropTypes.func,
+  onShowMenu: PropTypes.func,
+  setIsModifiedIdeaModalOpen: PropTypes.func,
 };
 
 IdeaCard.defaultProps = {
@@ -87,4 +105,7 @@ IdeaCard.defaultProps = {
     categories: "",
     is_liked_by_user: 0,
   },
+  onDelete: undefined,
+  onShowMenu: undefined,
+  setIsModifiedIdeaModalOpen: undefined,
 };
